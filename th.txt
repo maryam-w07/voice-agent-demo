@@ -1,0 +1,29 @@
+⚠️ TTS error: [WinError 2] The system cannot find the file specified
+almost always means one thing on Windows:
+
+👉 FFmpeg is not installed or not found in PATH.
+pydub requires FFmpeg to load/play MP3 files.
+
+Your OpenAI TTS is working — the file is being generated —
+but pydub cannot decode or play MP3, so it throws the WinError.
+
+Let’s fix it cleanly.
+################################################
+r.listen(source)
+
+Starts recording from the microphone.
+
+Waits for your voice.
+
+Stops recording when you stop speaking.
+
+Saves the recorded audio as an AudioData object.
+
+audio now contains raw audio captured from your mic.
+
+###########################################
+wav_data = audio.get_wav_data()
+What this does:
+Converts the audio data into WAV byte format.
+
+Now the audio is ready to be sent to OpenAI.
