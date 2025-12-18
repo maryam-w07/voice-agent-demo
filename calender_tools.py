@@ -11,20 +11,19 @@ from livekit.agents import function_tool, RunContext
 CLINIC_TIMEZONE = "Asia/Karachi"
 
 DOCTORS: Dict[str, str] = {
-    "smith": "Dr. Smith (General Dentistry)",
-    "jones": "Dr. Jones (Orthodontics)",
-    "lee": "Dr. Lee (Pediatric Dentistry)",
+    "general dentistry": "Dr.Badr",
+     "Orthodontics": "Dr.jones",
+     "Pediatric Dentistry" : "Dr.Ella",
 }
 
+
 SERVICES: Dict[str, Dict[str, int]] = {
-    "cleaning": {"duration_min": 60, "price": 150},
-    "filling": {"duration_min": 90, "price": 300},
-    "consultation": {"duration_min": 45, "price": 50},
+    "Cleaning": {"duration_min": 60, "price": 150},
+    "Filling": {"duration_min": 90, "price": 300},
+    "General Consultation" : {"duration_min":30,"price":2000}
 }
 
 _timezone = pytz.timezone(CLINIC_TIMEZONE)
-_calendar_service: Optional[Resource] = None #pyhton obj
-_calendar_id: Optional[str] = None
 
 
 def init_calendar(token_file: str, calendar_id: str) -> None: #google calender api authentication func, implements the OAuth 2.0 
@@ -44,7 +43,7 @@ def init_calendar(token_file: str, calendar_id: str) -> None: #google calender a
     if creds.expired and creds.refresh_token:
         creds.refresh(Request()) #refresh the token/automatically get a new token
 
-    _calendar_service = build("calendar", "v3", credentials=creds) #build(serviceName, version, **kwargs),created calender obj
+    _calendar_service = build("calendar", "v3", credentials=creds) #build(serviceName, version, **kwargs),created calender obj #build will return resource
     _calendar_id = calendar_id
 
     # dynamically create a service object that can communicate with the Google Calendar API
@@ -80,14 +79,35 @@ async def book_appointment(
 ) -> str:
     _require_calendar()
 
-    if doctor_key not in DOCTORS:
-        return "Invalid doctor selection."
+    #  match input doctor name to dictionary values
+    doctor_input = doctor_key.strip().lower()
+    matched_doctor_key = None
+    for key, name in DOCTORS.items():
+        if doctor_input == name.lower():  # exact case-insensitive match
+            matched_doctor_key = key
+            break
+
+    if matched_doctor_key is None:
+        # allow partial match
+        for key, name in DOCTORS.items():
+            if doctor_input in name.lower():
+                matched_doctor_key = key
+                break
+
+    if matched_doctor_key is None:
+        return f"Invalid doctor selection. Available doctors: {', '.join(DOCTORS.values())}"
+
+    # Use matched doctor key from here on
+    doctor_key = matched_doctor_key
+
     if service_key not in SERVICES:
+        print("invalid service")
         return "Invalid service selection."
-    #calendar event requires Start Time and End Time of appointment.
-    start_dt = _parse_datetime(date, time) #exact moment appoint begins
-    duration = SERVICES[service_key]["duration_min"] #appoint length
-    end_dt = start_dt + datetime.timedelta(minutes=duration) #Python class datetime.timedelta to represent a duration (60 minutes).
+
+    # Calendar event requires Start Time and End Time
+    start_dt = _parse_datetime(date, time)  # exact moment appointment begins
+    duration = SERVICES[service_key]["duration_min"]  # appointment length
+    end_dt = start_dt + datetime.timedelta(minutes=duration)
 
     event = {
         "summary": f"{service_key.title()} – {DOCTORS[doctor_key]}",
@@ -98,26 +118,33 @@ async def book_appointment(
             f"Service: {service_key.title()}\n"
             f"Price: ${SERVICES[service_key]['price']}"
         ),
+        "visibility": "public",
         "start": {"dateTime": start_dt.isoformat(), "timeZone": CLINIC_TIMEZONE},
         "end": {"dateTime": end_dt.isoformat(), "timeZone": CLINIC_TIMEZONE},
     }
-    #Resource is the type used to represent a connection to a specific API service, allowing you to access its functions.
-    created = cast(Resource, _calendar_service).events().insert(
+
+    created = _calendar_service.events().insert(
         calendarId=_calendar_id, body=event
-    ).execute() #Google API Client library/api usage
+    ).execute()
 
     return (
         f"Appointment confirmed for {patient_name} on {date} at {time} "
         f"with {DOCTORS[doctor_key]}. Your appointment ID is {created['id']}."
     )
 
+    print("SUMMARY FROM API:", created.get("summary"))
+    print("Event ID:", created["id"])
+    print("Event link:", created.get("htmlLink"))
+ 
+
 
 @function_tool()
 async def cancel_appointment(context: RunContext, appointment_id: str) -> str:
     _require_calendar()
     try:
-        cast(Resource, _calendar_service).events().delete(
-            calendarId=_calendar_id, eventId=appointment_id
+        _calendar_service.events().delete(
+            calendarId=_calendar_id,
+            eventId=appointment_id
         ).execute()
         return "Your appointment has been successfully canceled."
     except Exception:
