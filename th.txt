@@ -1,0 +1,54 @@
+What build() Does: It acts like a factory. It reads the Google Calendar v3 blueprint and dynamically generates a Python object (_calendar_service). 
+This object has methods like .events(), .acls(), etc.,
+ automatically created based on the API specification. You never have to define these methods yourself.
+
+ #############################
+ The _calendar_service object (which is a Resource) gives you access to the following flow:
+
+.events(): This method returns a new object representing the collection of calendar events.
+
+.delete(calendarId=..., eventId=...): This method is attached to the events object. It creates the specific API request payload for deleting an event.
+
+.execute(): This final method is what actually sends the HTTP request over the internet to Google's servers, waits for a response,
+ and converts the resulting JSON data back into a Python object (like the created dictionary in your book_appointment function).
+
+
+#################################
+The _parse_datetime function itself does not extract the date and time from the patient's speech. Its job is purely to format and validate the date and time strings that are handed to it.
+
+The overall flow involves three components, working in sequence:
+
+1. The Patient (Source)
+The date and time are provided by the patient's verbal input.
+
+Example Patient Input: "I'd like to book a cleaning for next Tuesday at 3 PM."
+
+2. The LLM (The Extractor and Router)
+The Large Language Model is the component that performs the crucial extraction.
+
+When the patient speaks, the LLM receives the transcribed text.
+
+The LLM, aware of the arguments required by the book_appointment function (which include date and time), uses its natural language understanding to:
+
+Determine the actual calendar date and time (e.g., "next Tuesday at 3 PM" is "2025-12-23" at "15:00").
+
+Map those values to the function's arguments.
+
+Output from LLM: The LLM's intelligent response to your program is a structured function call:
+
+JSON
+
+{
+  "tool_name": "book_appointment",
+  "arguments": {
+    "date": "2025-12-23", 
+    "time": "15:00", 
+    "patient_name": "...", 
+    // ... other args
+  }
+}
+The LLM converts the patient's natural language ("next Tuesday at 3 PM") into the precise string format required by your Python function's arguments.
+
+3. Your Function (_parse_datetime) (The Formatter and Localizer)
+Your _parse_datetime function receives the simple string outputs ("2025-12-23" and "15:00") from the LLM.
+
