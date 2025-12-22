@@ -10,38 +10,42 @@ from livekit.agents import function_tool, RunContext
 
 CLINIC_TIMEZONE = "Asia/Karachi"
 
-
 DOCTORS: Dict[str, str] = {
     "general dentistry": "Dr.Badr",
     "Orthodontics": "Dr.jones",
     "Pediatric Dentistry": "Dr.Ella",
 }
 
-
 SERVICES: Dict[str, Dict[str, int]] = {
     "Cleaning": {"duration_min": 60, "price": 150},
     "Fillings and Crowns": {"duration_min": 90, "price": 500},
-    "General Consultation": {"duration_min": 30, "price": 100},
-    "Dental Implants and Bridges":{"duration_min":10, "price":1000},
+    "General Consultation": {"duration_min": 45, "price": 100},
+    "Dental Implants and Bridges":{"duration_min":150, "price":1000},
    
 }
-
 
 _timezone = pytz.timezone(CLINIC_TIMEZONE)
 
 
-#calender initialization & authentication method
 def init_calendar(token_file: str, calendar_id: str) -> None:
     global _calendar_service, _calendar_id
 
-    if not os.path.exists(token_file):
+    # --- CLOUD PATH RESOLVER ---
+    # LiveKit Cloud mounts secrets in /etc/secret/
+    cloud_token_path = os.path.join("/etc/secret", os.path.basename(token_file))
+    
+    # Use cloud path if it exists, otherwise use the local path provided
+    final_token_path = cloud_token_path if os.path.exists(cloud_token_path) else token_file
+    # ---------------------------
+
+    if not os.path.exists(final_token_path):
         raise RuntimeError(
-            f"token.json not found at {token_file}. "
-            "Run OAuth locally once before starting the agent."
+            f"token.json not found at {final_token_path}. "
+            "If deploying to cloud, ensure --secret-mount ./token.json was used."
         )
 
     creds = Credentials.from_authorized_user_file(
-        token_file,
+        final_token_path,
         ["https://www.googleapis.com/auth/calendar"],
     )
 
@@ -55,9 +59,8 @@ def init_calendar(token_file: str, calendar_id: str) -> None:
 def _require_calendar() -> None:
     if _calendar_service is None or _calendar_id is None:
         raise RuntimeError("Google Calendar not initialized. Call init_calendar() first.")
-        
 
-#current datetime extraction nd formatting method
+
 def _parse_datetime(date: str, time: str) -> datetime.datetime:
     now = datetime.datetime.now()
 
@@ -82,17 +85,20 @@ async def current_time_date(context: RunContext) -> str: #livekit tools shouldnt
     return now.isoformat()
 
 
+
 @function_tool()
 async def list_doctors_and_services(context: RunContext) -> str:
     doctors = ", ".join(DOCTORS.values())
+    speciality= ", ".join(DOCTORS.keys())
     services = ", ".join(
         f"{name} (${data['price']}, {data['duration_min']} min)"
         for name, data in SERVICES.items()
     )
-    return f"Doctors: {doctors}. Services: {services}."
+    return f"Doctors: {doctors}.Speciality: {speciality} .Services: {services}."
 
 
 # AVAILABILITY TOOL
+
 @function_tool()
 async def check_doctor_availability(
     context: RunContext,
@@ -101,6 +107,22 @@ async def check_doctor_availability(
     end_time: str,
 ) -> bool:
     _require_calendar()
+
+    #  Normalize time if agent sends only HH:MM
+    if ":" in start_time and "T" not in start_time:
+        now = datetime.datetime.now(_timezone).date()
+        start_dt = _timezone.localize(
+            datetime.datetime.strptime(
+                f"{now} {start_time}", "%Y-%m-%d %H:%M"
+            )
+        )
+        end_dt = _timezone.localize(
+            datetime.datetime.strptime(
+                f"{now} {end_time}", "%Y-%m-%d %H:%M"
+            )
+        )
+        start_time = start_dt.isoformat()
+        end_time = end_dt.isoformat()
 
     events = _calendar_service.events().list(
         calendarId=_calendar_id,
@@ -117,7 +139,9 @@ async def check_doctor_availability(
     return True
 
 
+
 # BOOK APPOINTMENT 
+
 @function_tool()
 async def book_appointment(
     context: RunContext,
