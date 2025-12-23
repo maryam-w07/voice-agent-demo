@@ -13,4 +13,5 @@ creds = flow.run_local_server(port=0)
 with open("token.json", "w", encoding="utf-8") as token:
     token.write(creds.to_json())
 
-print("✅ token.json generated successfully")
+print("token.json generated successfully")
+
