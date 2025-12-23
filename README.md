@@ -75,10 +75,8 @@ Key deployment points:
 
 ---
 ## Testing
-
------------
-## A live demo number is available upon request.
+# A live demo number is available upon request.
 
 
-## Please contact me if you’d like to test the agent.
+# Please contact me if you’d like to test the agent.
 
