@@ -1,6 +1,6 @@
 # Dental Clinic Voice AI Receptionist
 
-This project is a **voice-based AI receptionist** built for a dental clinic. The agent handles real phone calls, talks to patients naturally, and manages appointments end‑to‑end — including checking availability, booking, rescheduling, and canceling appointments.
+This project is a **voice-based AI receptionist** built for a dental clinic using Livekit with telephone integeration. The agent handles real phone calls, talks to patients naturally, and manages appointments end‑to‑end — including checking availability, booking, rescheduling, and canceling appointments.
 
 I built this project to understand how **voice AI systems work in production**, not just as demos. It combines real‑time speech, LLM reasoning, and an actual backend (Google Calendar) that a clinic could realistically use.
 
@@ -49,9 +49,10 @@ The agent behaves like a real receptionist — it confirms details with the call
 
 1. Clone the repository
 2. Create and activate a virtual environment
-3. Install dependencies
-4. Add `.env` and `token.json`
-5. Run the agent:
+3. Install dependencies(requirenments.txt)
+4. Add `.env`, create a livekit cloud project and generate api keys for livekit cloud nd openai.
+5. for google calendar api,authenticate nd add your client_secret.json nd token.json.
+6. Run the agent:you can either install livekit cli or use python agent.py start.
 
 ```
 python agent.py
@@ -73,5 +74,11 @@ Key deployment points:
 * Once deployed, the agent runs continuously and answers real calls
 
 ---
+## Testing
 
+-----------
+## A live demo number is available upon request.
+
+
+## Please contact me if you’d like to test the agent.
 
