@@ -1,0 +1,21 @@
+#------livekit core---------
+livekit-agents
+livekit-plugins-openai
+livekit-plugins-silero
+
+#---------opentelemetry------
+opentelemetry-api
+opentelemetry-sdk
+opentelemetry-semantic-conventions
+
+# --- Google Calendar ---
+google-api-python-client
+google-auth-oauthlib
+google-auth-httplib2
+pytz
+
+# --- Utilities ---
+python-dotenv
+pydantic
+aiohttp
+
