@@ -108,35 +108,43 @@ async def check_doctor_availability(
 ) -> bool:
     _require_calendar()
 
-    #  Normalize time if agent sends only HH:MM
-    if ":" in start_time and "T" not in start_time:
-        now = datetime.datetime.now(_timezone).date()
-        start_dt = _timezone.localize(
-            datetime.datetime.strptime(
-                f"{now} {start_time}", "%Y-%m-%d %H:%M"
-            )
-        )
-        end_dt = _timezone.localize(
-            datetime.datetime.strptime(
-                f"{now} {end_time}", "%Y-%m-%d %H:%M"
-            )
-        )
-        start_time = start_dt.isoformat()
-        end_time = end_dt.isoformat()
+    # 1. helper to ensure google-required 'Z' suffix
+    def ensure_rfc3339(ts):
+        if not ts.endswith('Z') and '+' not in ts:
+            return ts + 'Z'
+        return ts
 
-    events = _calendar_service.events().list(
-        calendarId=_calendar_id,
-        timeMin=start_time,
-        timeMax=end_time,
-        singleEvents=True,
-        orderBy="startTime",
-    ).execute()
+    # 2. fix cases where the LLM sends time without a date (e.g., "10:00:00")
+    if "T" not in start_time:
+        now_date = datetime.datetime.now(_timezone).strftime("%Y-%m-%d")
+        start_time = f"{now_date}T{start_time}"
+        end_time = f"{now_date}T{end_time}"
 
-    for event in events.get("items", []):
-        if doctor_name.lower() in event.get("summary", "").lower():
-            return False
+    clean_start = ensure_rfc3339(start_time)
+    clean_end = ensure_rfc3339(end_time)
 
-    return True
+    try:
+        events = _calendar_service.events().list(
+            calendarId=_calendar_id,
+            timeMin=clean_start,
+            timeMax=clean_end,
+            singleEvents=True,
+            orderBy="startTime",
+        ).execute()
+        
+        # 3. conflict Check logic
+        for event in events.get("items", []):
+            summary = event.get("summary", "").lower()
+            # If the doctor's name is in the event
+            if doctor_name.lower() in summary or "booked" in summary:
+                return False # Slot is NOT available
+
+        return True # Slot IS available
+        
+    except Exception as e:
+        # this prevents the "Internal Error" by catching the crash
+        print(f"Calendar API Error: {e}")
+        return False
 
 
 
