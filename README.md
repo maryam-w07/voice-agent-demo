@@ -1,6 +1,6 @@
 # Dental Clinic Voice AI Receptionist
 
-This project is a **voice-based AI receptionist** built for a dental clinic using Livekit with telephone integeration. The agent handles real phone calls, talks to patients naturally, and manages appointments end‑to‑end — including checking availability, booking, rescheduling, and canceling appointments.
+This project is a **voice-based AI agent** built for a dental clinic using Livekit with telephone integeration. The agent handles real phone calls, talks to patients naturally, and manages appointments end‑to‑end — including checking availability, booking, rescheduling, and canceling appointments.
 
 I built this project to understand how **voice AI systems work in production**, not just as demos. It combines real‑time speech, LLM reasoning, and an actual backend (Google Calendar) that a clinic could realistically use.
 
