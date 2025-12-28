@@ -7,9 +7,11 @@ from livekit.agents import Agent, AgentSession, JobContext, WorkerOptions, funct
 from livekit.plugins import openai, silero
 from calender_tools import check_doctor_availability, init_calendar, list_doctors_and_services, book_appointment, cancel_appointment, current_time_date,_parse_datetime
 
+
 # Initialize calendar client constants
 CALENDAR_ID = os.getenv("GOOGLE_CALENDAR_ID")
 TOKEN_FILE = "token.json"
+
 
 #voiceagent
 class VoiceAssistant(Agent):
@@ -133,3 +135,4 @@ if __name__ == "__main__":
         agent_name="dental_receptionist",
     )
     agents.cli.run_app(opts)
+
