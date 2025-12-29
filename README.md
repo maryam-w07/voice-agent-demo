@@ -22,7 +22,7 @@ The agent behaves like a real receptionist — it confirms details with the call
 ## Tech stack
 
 * **Python**
-* **LiveKit Agents** – real‑time voice agent framework
+* **LiveKit Agents** – real‑time voice/media agent framework
 * **OpenAI models**
 
   * GPT‑4o (LLM reasoning)
@@ -52,7 +52,7 @@ The agent behaves like a real receptionist — it confirms details with the call
 3. Install dependencies(requirenments.txt)
 4. Add `.env`, create a livekit cloud project and generate api keys for livekit cloud nd openai.
 5. for google calendar api,authenticate nd add your client_secret.json nd token.json.
-6. Run the agent:you can either install livekit cli or use python agent.py start.
+6. Run the agent: you can either install livekit cli or use python agent.py start in ur project terminal.
 
 ```
 python agent.py
